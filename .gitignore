@@ -1,0 +1,23 @@
+# Dataset — download on the VM using: python chessred.py --dataroot dataset --download
+dataset/
+
+# Model checkpoints
+checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

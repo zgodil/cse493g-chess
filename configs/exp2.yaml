@@ -1,0 +1,40 @@
+# Experiment 2: ViT-B/16 + 2D conv head, pretrained, no auxiliary heads
+# Tests whether exploiting the spatial structure of patch tokens adds value over Exp 1.
+
+data:
+  dataroot: "dataset"
+  img_size: 224
+  num_workers: 4
+  pin_memory: true
+
+model:
+  head: conv2d
+  aux_heads: []
+  pretrained: true
+  num_piece_classes: 13
+  num_orient_classes: 4
+
+loss:
+  w_corners: 0.0
+  w_occupancy: 0.0
+  w_orient: 0.0
+
+training:
+  epochs: 50
+  batch_size: 32
+  optimizer:
+    lr: 1.0e-4
+    weight_decay: 1.0e-4
+  scheduler:
+    t_max: 50
+    eta_min: 1.0e-6
+  early_stopping:
+    patience: 10
+  checkpoint:
+    save_dir: "checkpoints/exp2"
+    monitor: "val_exact_acc"
+    mode: "max"
+  mixed_precision: true
+
+inference:
+  checkpoint: "checkpoints/exp2/best_model.pt"
