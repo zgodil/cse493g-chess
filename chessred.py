@@ -2,12 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from tkinter import END, messagebox, ttk
 from typing import Union
-
-import pandas as pd
-from PIL import Image, ImageTk
-from ttkthemes import ThemedTk
 
 from utils import download_chessred, extract_zipfile
 
@@ -23,6 +18,10 @@ class Browser:
     """
 
     def __init__(self, dataroot: Union[str, Path]) -> None:
+        from tkinter import END, messagebox, ttk  # noqa: F401 — GUI only
+        import pandas as pd
+        from PIL import Image, ImageTk
+        from ttkthemes import ThemedTk
         """Initialize Browser.
 
         Args:
