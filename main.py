@@ -14,7 +14,8 @@ from data.transforms import get_train_transforms, get_val_transforms
 from inference.predict import load_model, predict
 from model.loss import ChessLoss
 from model.model import build_model
-from training.callbacks import EarlyStopping, ModelCheckpoint
+from training.callbacks import EarlyStopping, MetricsLogger, ModelCheckpoint
+from training.plot import plot_training_curves
 from training.train import train_epoch
 from training.validate import validate
 
@@ -72,6 +73,8 @@ def run_train(cfg: dict) -> None:
         monitor=ckpt_cfg['monitor'],
         patience=cfg['training']['early_stopping']['patience'],
         mode=ckpt_cfg['mode'])
+    metrics_logger = MetricsLogger(
+        save_path=f"{ckpt_cfg['save_dir']}/metrics.csv")
 
     use_amp = cfg['training']['mixed_precision'] and device.type == 'cuda'
     scaler = torch.cuda.amp.GradScaler() if use_amp else None
@@ -85,6 +88,7 @@ def run_train(cfg: dict) -> None:
 
         metrics = {**tr, **vl}
         checkpoint_cb(model, optimizer, epoch, metrics)
+        metrics_logger(epoch, metrics)
 
         print(
             f"Epoch {epoch:3d}  "
@@ -99,6 +103,12 @@ def run_train(cfg: dict) -> None:
 
     print(f"\nBest {checkpoint_cb.monitor}: {checkpoint_cb.best_value:.4f}")
     print(f"Checkpoint saved at: {checkpoint_cb.best_path}")
+
+    plot_training_curves(
+        csv_path=f"{ckpt_cfg['save_dir']}/metrics.csv",
+        save_dir=ckpt_cfg['save_dir'],
+        experiment_name=ckpt_cfg['save_dir'].split('/')[-1],
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -7,3 +7,4 @@ tqdm>=4.65.0
 PyYAML>=6.0
 wget>=3.2
 ttkthemes
+matplotlib>=3.7.0

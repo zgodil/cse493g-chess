@@ -1,4 +1,5 @@
-"""Training callbacks: checkpointing and early stopping."""
+"""Training callbacks: checkpointing, early stopping, and metrics logging."""
+import csv
 from pathlib import Path
 from typing import Dict
 
@@ -64,3 +65,20 @@ class EarlyStopping:
                 print(f"  [early stop] no improvement for {self.patience} epochs")
                 return True
         return False
+
+
+class MetricsLogger:
+    """Appends per-epoch metrics to a CSV file for later plotting."""
+
+    def __init__(self, save_path: str):
+        self.save_path = Path(save_path)
+        self.save_path.parent.mkdir(parents=True, exist_ok=True)
+        self._rows: list = []
+
+    def __call__(self, epoch: int, metrics: Dict[str, float]) -> None:
+        self._rows.append({'epoch': epoch, **metrics})
+        fieldnames = ['epoch'] + list(metrics.keys())
+        with open(self.save_path, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(self._rows)
