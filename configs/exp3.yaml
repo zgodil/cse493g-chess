@@ -21,7 +21,7 @@ loss:
 
 training:
   epochs: 50
-  batch_size: 8
+  batch_size: 32
   optimizer:
     lr: 1.0e-4
     weight_decay: 1.0e-4
@@ -34,7 +34,7 @@ training:
     save_dir: "checkpoints/exp3"
     monitor: "val_exact_acc"
     mode: "max"
-  mixed_precision: false
+  mixed_precision: true
 
 inference:
   checkpoint: "checkpoints/exp3/best_model.pt"
