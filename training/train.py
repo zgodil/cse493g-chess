@@ -12,7 +12,7 @@ def train_epoch(
     optimizer: torch.optim.Optimizer,
     criterion: nn.Module,
     device: torch.device,
-    scaler: Optional[torch.cuda.amp.GradScaler] = None,
+    scaler: Optional[torch.amp.GradScaler] = None,
 ) -> Dict[str, float]:
     """Run one training epoch and return aggregated metrics."""
     model.train()

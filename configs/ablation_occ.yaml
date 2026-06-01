@@ -36,7 +36,7 @@ training:
     save_dir: "checkpoints/ablation_occ"
     monitor: "val_exact_acc"
     mode: "max"
-  mixed_precision: true
+  mixed_precision: false
 
 inference:
   checkpoint: "checkpoints/ablation_occ/best_model.pt"

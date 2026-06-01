@@ -29,6 +29,9 @@ def _device() -> torch.device:
 # ---------------------------------------------------------------------------
 
 def run_train(cfg: dict) -> None:
+    # Disable TF32 to avoid cuBLASLt on systems where it is unavailable
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
     device = _device()
     img_size = cfg['data']['img_size']
 
@@ -77,7 +80,7 @@ def run_train(cfg: dict) -> None:
         save_path=f"{ckpt_cfg['save_dir']}/metrics.csv")
 
     use_amp = cfg['training']['mixed_precision'] and device.type == 'cuda'
-    scaler = torch.cuda.amp.GradScaler() if use_amp else None
+    scaler = torch.amp.GradScaler('cuda') if use_amp else None
 
     print(f"Device: {device}  |  train={len(train_ds)}  val={len(val_ds)}")
 
