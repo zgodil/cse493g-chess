@@ -29,9 +29,13 @@ def _device() -> torch.device:
 # ---------------------------------------------------------------------------
 
 def run_train(cfg: dict) -> None:
-    # Disable TF32 to avoid cuBLASLt on systems where it is unavailable
+    # Force math attention backend — disables flash/memory-efficient attention
+    # which use cuBLASLt (unavailable on this CUDA 13.0 / PyTorch cu129 setup)
     torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
+    torch.backends.cuda.enable_flash_sdp(False)
+    torch.backends.cuda.enable_mem_efficient_sdp(False)
+    torch.backends.cuda.enable_math_sdp(True)
     device = _device()
     img_size = cfg['data']['img_size']
 
