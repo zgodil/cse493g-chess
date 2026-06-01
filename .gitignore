@@ -1,6 +1,7 @@
 # Dataset — download on the VM using: python chessred.py --dataroot dataset --download
 dataset/
 dataset_224/
+*.zip
 
 # Model checkpoints
 checkpoints/
