@@ -21,7 +21,7 @@ loss:
 
 training:
   epochs: 50
-  batch_size: 32
+  batch_size: 16
   optimizer:
     lr: 1.0e-4
     weight_decay: 1.0e-4
