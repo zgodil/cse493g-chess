@@ -18,11 +18,12 @@ class ChessLoss(nn.Module):
     """
 
     def __init__(self, w_corners: float = 0.2, w_occ: float = 0.1,
-                 w_orient: float = 0.2):
+                 w_orient: float = 0.2, label_smoothing: float = 0.0):
         super().__init__()
         self.w_corners = w_corners
         self.w_occ = w_occ
         self.w_orient = w_orient
+        self.label_smoothing = label_smoothing
 
     def forward(
         self,
@@ -34,7 +35,8 @@ class ChessLoss(nn.Module):
 
         device = board_logits.device
 
-        l_primary = F.cross_entropy(board_logits, board_labels)
+        l_primary = F.cross_entropy(board_logits, board_labels,
+                                    label_smoothing=self.label_smoothing)
 
         # Corners — head may be absent; when present, mask out NaN-labelled samples
         if pred_corners is not None:

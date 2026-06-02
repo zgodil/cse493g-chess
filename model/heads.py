@@ -90,7 +90,7 @@ class BoardHead(nn.Module):
         self.pool = nn.AdaptiveAvgPool2d((8, 8))
         self.conv = nn.Sequential(
             nn.Conv2d(embed_dim, 256, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(256),
+            nn.GroupNorm(num_groups=32, num_channels=256),
             nn.ReLU(inplace=True),
             nn.Conv2d(256, num_classes, kernel_size=1),
         )

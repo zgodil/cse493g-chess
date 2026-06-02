@@ -19,15 +19,17 @@ loss:
   w_corners: 0.0
   w_occupancy: 0.0
   w_orient: 0.0
+  label_smoothing: 0.1
 
 training:
   epochs: 50
   batch_size: 32
   optimizer:
-    lr: 1.0e-4
-    weight_decay: 1.0e-4
+    lr: 5.0e-5
+    weight_decay: 1.0e-2
   scheduler:
     t_max: 50
+    warmup_epochs: 5
     eta_min: 1.0e-6
   early_stopping:
     patience: 10

@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 import yaml
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torch.utils.data import DataLoader
 
 from data.dataset import ChessRedDataset
@@ -53,16 +53,22 @@ def run_train(cfg: dict) -> None:
     criterion = ChessLoss(
         w_corners=cfg['loss']['w_corners'],
         w_occ=cfg['loss']['w_occupancy'],
-        w_orient=cfg['loss']['w_orient'])
+        w_orient=cfg['loss']['w_orient'],
+        label_smoothing=cfg['loss'].get('label_smoothing', 0.0))
 
     opt_cfg = cfg['training']['optimizer']
     optimizer = AdamW(model.parameters(),
                       lr=opt_cfg['lr'], weight_decay=opt_cfg['weight_decay'])
 
     sched_cfg = cfg['training']['scheduler']
-    scheduler = CosineAnnealingLR(optimizer,
-                                   T_max=sched_cfg['t_max'],
-                                   eta_min=sched_cfg['eta_min'])
+    warmup_epochs = sched_cfg.get('warmup_epochs', 5)
+    warmup = LinearLR(optimizer, start_factor=0.1, end_factor=1.0,
+                      total_iters=warmup_epochs)
+    cosine = CosineAnnealingLR(optimizer,
+                                T_max=sched_cfg['t_max'] - warmup_epochs,
+                                eta_min=sched_cfg['eta_min'])
+    scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine],
+                              milestones=[warmup_epochs])
 
     ckpt_cfg = cfg['training']['checkpoint']
     checkpoint_cb = ModelCheckpoint(
@@ -112,6 +118,45 @@ def run_train(cfg: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Test
+# ---------------------------------------------------------------------------
+
+def run_test(args: argparse.Namespace, cfg: dict) -> None:
+    device = _device()
+    img_size = cfg['data']['img_size']
+
+    test_ds = ChessRedDataset(
+        cfg['data']['dataroot'], split='test',
+        transform=get_val_transforms(img_size))
+    test_loader = DataLoader(
+        test_ds, batch_size=cfg['training']['batch_size'], shuffle=False,
+        num_workers=cfg['data']['num_workers'],
+        pin_memory=cfg['data']['pin_memory'])
+
+    ckpt_path = args.checkpoint or cfg['inference']['checkpoint']
+    model = build_model(cfg).to(device)
+    ckpt = torch.load(ckpt_path, map_location=device)
+    model.load_state_dict(ckpt['model_state_dict'])
+    print(f"Loaded checkpoint from epoch {ckpt['epoch']}  "
+          f"(val_exact_acc={ckpt['metrics']['val_exact_acc']:.4f})")
+
+    criterion = ChessLoss(
+        w_corners=cfg['loss']['w_corners'],
+        w_occ=cfg['loss']['w_occupancy'],
+        w_orient=cfg['loss']['w_orient'],
+        label_smoothing=cfg['loss'].get('label_smoothing', 0.0))
+
+    results = validate(model, test_loader, criterion, device)
+
+    print(f"\n{'='*40}")
+    print(f"Test results  ({len(test_ds)} images)")
+    print(f"  Exact-match accuracy : {results['val_exact_acc']:.4f}")
+    print(f"  Tolerance-1 accuracy : {results['val_tol1_acc']:.4f}")
+    print(f"  Loss                 : {results['val_loss']:.4f}")
+    print(f"{'='*40}")
+
+
+# ---------------------------------------------------------------------------
 # Predict
 # ---------------------------------------------------------------------------
 
@@ -137,6 +182,10 @@ def main() -> None:
 
     sub.add_parser('train', help='Train the model')
 
+    test_p = sub.add_parser('test', help='Evaluate best checkpoint on the test set')
+    test_p.add_argument('--checkpoint', default=None,
+                        help='Override checkpoint path from config')
+
     pred_p = sub.add_parser('predict', help='Run inference on an image')
     pred_p.add_argument('--image', required=True, help='Path to input image')
     pred_p.add_argument('--checkpoint', default=None,
@@ -149,6 +198,8 @@ def main() -> None:
 
     if args.command == 'train':
         run_train(cfg)
+    elif args.command == 'test':
+        run_test(args, cfg)
     elif args.command == 'predict':
         run_predict(args, cfg)
     else:
