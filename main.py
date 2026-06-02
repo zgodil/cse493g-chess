@@ -155,6 +155,20 @@ def run_test(args: argparse.Namespace, cfg: dict) -> None:
     print(f"  Loss                 : {results['val_loss']:.4f}")
     print(f"{'='*40}")
 
+    import json
+    from pathlib import Path
+    save_dir = Path(ckpt_path).parent
+    test_results = {
+        'test_exact_acc': results['val_exact_acc'],
+        'test_tol1_acc': results['val_tol1_acc'],
+        'test_loss': results['val_loss'],
+        'checkpoint': str(ckpt_path),
+        'n_samples': len(test_ds),
+    }
+    with open(save_dir / 'test_results.json', 'w') as f:
+        json.dump(test_results, f, indent=2)
+    print(f"Saved test results to {save_dir / 'test_results.json'}")
+
 
 # ---------------------------------------------------------------------------
 # Predict
